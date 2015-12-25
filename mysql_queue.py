@@ -16,9 +16,8 @@ class mysql_queue:
 		self.cnx.commit()
 		pass
 
-	def dequeue(self,work_type,worker=None,key=None):
+	def dequeue(self,work_type,worker=None,work_key=None):
 		self.cur.execute('SET AUTOCOMMIT=0;')
-		self.cnx.commit()
 		sql = "SELECT `id`,`key`,`request` FROM works WHERE stat='pending' "
 		parameter = []
 		if work_type is not None:
@@ -27,9 +26,9 @@ class mysql_queue:
 		if worker is not None:
 			sql += " AND `worker`=%s"
 			parameter.append(worker)
-		if key is not None:
+		if work_key is not None:
 			sql += " AND `key`=%s"
-			parameter.append(key)
+			parameter.append(work_key)
 		sql += ' ORDER BY `id` LIMIT 1  FOR UPDATE'
 		self.cur.execute(sql,parameter)
 		result = self.cur.fetchone()
@@ -37,19 +36,37 @@ class mysql_queue:
 			return None
 		work_key = result[1]
 		request = result[2]
-		self.cur.execute('UPDATE works SET `stat`=%s WHERE `key`=%s',(self.worker,work_key))
+		self.cur.execute("UPDATE works SET `stat`='working',worker=%s WHERE `key`=%s",(self.worker,work_key))
 		self.cnx.commit()
 		return {'work_key':work_key,'request':request}
 
 
-	def success(key,worker):
-		pass
+	def success(self,work_key,data):
+		self.cur.execute('SET AUTOCOMMIT=0;')
+		self.cur.execute('REPLACE INTO results (`key`,`data`) VALUES (%s,%s)',(work_key,data))
+		self.cur.execute('DELETE FROM works WHERE `key`=%s',(work_key,))
+		self.cnx.commit()
 
-	def fail(key,worker):
-		pass
+	def fail(self,work_key,error_message):
+		self.cur.execute('SET AUTOCOMMIT=0;')
+		self.cur.execute("UPDATE works SET `stat`='failed',`error_message`=%s WHERE `key`=%s",(error_message,work_key))
+		self.cnx.commit()
 
-	def recover(key,worker):
-		pass
+	def recover(self,work_key=None,worker=None):
+		self.cur.execute('SET AUTOCOMMIT=0;')
+		sql = "UPDATE works SET stat='pending',error_message=NULL WHERE stat='failed'"
+		parameter = []
+		if work_key is not None:
+			sql += " AND `key`=%s"
+			parameter.append(work_key)
+		if worker is not None:
+			sql += " AND `worker`=%s"
+			parameter.append(worker)
+		self.cur.execute(sql,parameter)
+		self.cnx.commit()
 
-	def recover_all():
-		pass
+	def recover_all(self):
+		self.cur.execute('SET AUTOCOMMIT=0;')
+		sql = "UPDATE works SET stat='pending',error_message=NULL WHERE stat='failed'"
+		self.cur.execute(sql)
+		self.cnx.commit()
