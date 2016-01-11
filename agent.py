@@ -23,20 +23,21 @@ def google_serp_validator(result):
 @retry(wait_random_min=25000, wait_random_max=35000, stop_max_attempt_number=10)
 def get_data(url):
 	result = requests.get(url)
+	print result.json()
 	if validator[work_type](result) is not True:
 		raise Exception('RETRY',result.json())
 	return result
 
-validator = {'google_serp':google_serp_validator,'google_serp_seed':google_serp_validator}
+validator = {'google_serp':google_serp_validator,'google_serp_seed':google_serp_validator,'test':google_serp_validator}
 
 
-q = mysql_queue(config.db_host,config.db_user,config.db_passwd,ocnfig.db_database,socket.gethostname())
+q = mysql_queue(config.db_host,config.db_user,config.db_passwd,config.db_database,socket.gethostname())
 
 while True:
 	work = q.dequeue(['*'])
 	if work is None:
+		logging.info('WAITING...')
 		time.sleep(30)
-		print 'reload'
 		continue
 	url = work['request']
 	work_key = work['work_key']
@@ -47,7 +48,6 @@ while True:
 	logging.info("%s,%s",work_type,work_key)
 	try:
 		result = get_data(url)
-		logging.info('SUCCESS')
 		q.success(work_key,work_type,result.text.encode('utf-8'))
 	except:
 		q.fail(work_key, str(sys.exc_info()[0])+'\n'+traceback.format_exc())
