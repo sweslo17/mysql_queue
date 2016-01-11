@@ -10,15 +10,12 @@ import traceback
 import socket
 from retrying import retry
 import config
+import validator_config
+
 
 reload(sys)  # Reload does the trick!
 sys.setdefaultencoding('UTF8')
 
-def google_serp_validator(result):
-	if result.status_code != 200 or result.json()['responseStatus'] != 200:
-		return False
-	return True
-#		print 'error: ' + str(result.json()['responseStatus'])
 
 @retry(wait_random_min=25000, wait_random_max=35000, stop_max_attempt_number=10)
 def get_data(url):
@@ -27,8 +24,6 @@ def get_data(url):
 	if validator[work_type](result) is not True:
 		raise Exception('RETRY',result.json())
 	return result
-
-validator = {'google_serp':google_serp_validator,'google_serp_seed':google_serp_validator,'test':google_serp_validator}
 
 
 q = mysql_queue(config.db_host,config.db_user,config.db_passwd,config.db_database,socket.gethostname())
@@ -39,6 +34,9 @@ while True:
 		logging.info('WAITING...')
 		time.sleep(30)
 		continue
+	if is_changed(validator_config):
+		reload(validator_config)
+		validator = validator_config.validator
 	url = work['request']
 	work_key = work['work_key']
 	work_type = work['work_type']
