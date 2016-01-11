@@ -16,11 +16,6 @@ import validator_config
 reload(sys)  # Reload does the trick!
 sys.setdefaultencoding('UTF8')
 
-def google_serp_validator(result):
-	if result.status_code != 200 or result.json()['responseStatus'] != 200:
-		return False
-	return True
-
 @retry(wait_random_min=25000, wait_random_max=35000, stop_max_attempt_number=10)
 def get_data(url):
 	result = requests.get(url)
