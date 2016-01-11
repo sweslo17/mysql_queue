@@ -9,6 +9,7 @@ import logging
 import traceback
 import socket
 from retrying import retry
+import config
 
 reload(sys)  # Reload does the trick!
 sys.setdefaultencoding('UTF8')
@@ -29,7 +30,7 @@ def get_data(url):
 validator = {'google_serp':google_serp_validator,'google_serp_seed':google_serp_validator}
 
 
-q = mysql_queue('10.0.1.5','rogerlo','roge2@iii','work_queue',socket.gethostname())
+q = mysql_queue(config.db_host,config.db_user,config.db_passwd,ocnfig.db_database,socket.gethostname())
 
 while True:
 	work = q.dequeue(['*'])
