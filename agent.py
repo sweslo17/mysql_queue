@@ -16,6 +16,10 @@ import validator_config
 reload(sys)  # Reload does the trick!
 sys.setdefaultencoding('UTF8')
 
+def google_serp_validator(result):
+	if result.status_code != 200 or result.json()['responseStatus'] != 200:
+		return False
+	return True
 
 @retry(wait_random_min=25000, wait_random_max=35000, stop_max_attempt_number=10)
 def get_data(url):
@@ -26,6 +30,11 @@ def get_data(url):
 
 
 q = mysql_queue(config.db_host,config.db_user,config.db_passwd,config.db_database,socket.gethostname())
+
+logging.basicConfig(stream=sys.stdout,level=logging.DEBUG,
+		format='%(asctime)s %(levelname)-8s %(message)s',
+		datefmt='%a, %d %b %Y %H:%M:%S')
+
 
 while True:
 	work = q.dequeue(['*'])
@@ -38,9 +47,6 @@ while True:
 	url = work['request']
 	work_key = work['work_key']
 	work_type = work['work_type']
-	logging.basicConfig(level=logging.DEBUG,
-			format='%(asctime)s %(levelname)-8s %(message)s',
-			datefmt='%a, %d %b %Y %H:%M:%S')
 	logging.info("%s,%s",work_type,work_key)
 	try:
 		result = get_data(url)

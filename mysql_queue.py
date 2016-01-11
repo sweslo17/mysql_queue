@@ -38,7 +38,7 @@ class mysql_queue:
 		self.cur.execute(sql,parameter)
 		result = self.cur.fetchone()
 		if result is None:
-			self.cnx.commit()
+			self.cnx.rollback()
 			return None
 		work_key = result[1]
 		request = result[2]
