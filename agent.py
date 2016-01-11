@@ -34,9 +34,8 @@ while True:
 		logging.info('WAITING...')
 		time.sleep(30)
 		continue
-	if is_changed(validator_config):
-		reload(validator_config)
-		validator = validator_config.validator
+	reload(validator_config)
+	validator = validator_config.validator
 	url = work['request']
 	work_key = work['work_key']
 	work_type = work['work_type']
