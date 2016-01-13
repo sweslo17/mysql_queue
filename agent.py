@@ -17,7 +17,7 @@ reload(sys)  # Reload does the trick!
 sys.setdefaultencoding('UTF8')
 
 @retry(wait_random_min=25000, wait_random_max=35000, stop_max_attempt_number=10)
-def get_data(url):
+def get_data(url,work_type):
 	result = requests.get(url)
 	if work_type not in validator:
 		work_type = 'default'
@@ -46,7 +46,7 @@ while True:
 	work_type = work['work_type']
 	logging.info("%s,%s",work_type,work_key)
 	try:
-		result = get_data(url)
+		result = get_data(url,work_type)
 		q.success(work_key,work_type,result.text.encode('utf-8'))
 	except:
 		q.fail(work_key, str(sys.exc_info()[0])+'\n'+traceback.format_exc())
