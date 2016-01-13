@@ -19,6 +19,8 @@ sys.setdefaultencoding('UTF8')
 @retry(wait_random_min=25000, wait_random_max=35000, stop_max_attempt_number=10)
 def get_data(url):
 	result = requests.get(url)
+	if work_type not in validator:
+		work_type = 'default'
 	if validator[work_type](result) is not True:
 		raise Exception('RETRY',result.json())
 	return result
