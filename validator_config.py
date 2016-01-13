@@ -5,6 +5,7 @@ def google_serp_validator(result):
 
 def default_validator(result):
 	if result.status_code != 200:
+		print result.status_code
 		return False
 	return True
 
